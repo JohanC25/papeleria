@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Registrar Venta</title>
+  <a href="/reportes">Ver Reportes de Ventas</a>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      padding: 30px;
+    }
+    form {
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    table {
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table, th, td {
+      border: 1px solid black;
+      padding: 8px 12px;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    input[type="text"],
+    input[type="number"],
+    input[type="date"] {
+      padding: 6px;
+      margin: 5px;
+    }
+    button {
+      padding: 8px 16px;
+      background-color: #28a745;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Registrar Venta</h1>
+  <form method="POST" action="/registrar">
+    <label>Fecha de venta:
+      <input type="date" name="fecha" id="fecha" required>
+    </label><br>
+
+    <label>Monto vendido:
+      <input type="number" name="monto" step="0.01" min="0.01" pattern="^\d+(\.\d{1,2})?$" required>
+    </label><br>
+
+    <label>Descripción:
+      <input type="text" name="descripcion" required>
+    </label><br>
+
+    <label>
+      <input type="checkbox" name="pagado"> Pagado con Deuna
+    </label><br>
+
+    <button type="submit">Guardar Venta</button>
+  </form>
+
+  <h2>Ventas registradas</h2>
+  <%
+    let total = 0;
+    ventas.forEach(v => total += v.monto);
+  %>
+    <table>
+    <tr>
+        <th>Fecha</th>
+        <th>Monto</th>
+        <th>Descripción</th>
+        <th>Pagado Deuna</th>
+    </tr>
+    <% ventas.forEach(v => { %>
+        <tr>
+        <td>
+            <% const [a, m, d] = v.fecha.split("-"); %>
+            <%= `${d}/${m}/${a}` %>
+        </td>
+        <td><%= v.monto.toFixed(2) %></td>
+        <td><%= v.descripcion %></td>
+        <td><%= v.pagado_deuna_str %></td>
+        </tr>
+    <% }) %>
+    <tr>
+        <td><strong>Total</strong></td>
+        <td><strong><%= total.toFixed(2) %></strong></td>
+        <td colspan="2"></td>
+    </tr>
+    </table>
+
+  <script>
+    // Colocar fecha actual por defecto
+    const hoy = new Date().toISOString().split("T")[0];
+    document.getElementById('fecha').value = hoy;
+  </script>
+</body>
+</html>

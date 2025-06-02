@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Reporte de Ventas</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px;
+    }
+    table {
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table, th, td {
+      border: 1px solid black;
+      padding: 8px 12px;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    form {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    input, select {
+      margin: 5px;
+      padding: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Reporte de Ventas</h1>
+
+  <form method="GET" action="/reportes">
+    <label>Desde: <input type="date" name="desde" value="<%= filtros.desde || '' %>"></label>
+    <label>Hasta: <input type="date" name="hasta" value="<%= filtros.hasta || '' %>"></label>
+    <label>
+      ¿Pagado con Deuna?
+      <select name="deuna">
+        <option value="" <%= filtros.deuna === undefined ? 'selected' : '' %>>Todos</option>
+        <option value="1" <%= filtros.deuna === '1' ? 'selected' : '' %>>Sí</option>
+        <option value="0" <%= filtros.deuna === '0' ? 'selected' : '' %>>No</option>
+      </select>
+    </label>
+    <button type="submit">Filtrar</button>
+  </form>
+
+  <p><strong>Total vendido:</strong> $<%= total %></p>
+  <p><strong>Total pagado con Deuna:</strong> $<%= conDeuna %></p>
+  <p><strong>Total pagado sin Deuna:</strong> $<%= sinDeuna %></p>
+
+  <table>
+    <tr>
+      <th>Fecha</th>
+      <th>Monto</th>
+      <th>Descripción</th>
+      <th>Pagado Deuna</th>
+    </tr>
+    <% ventas.forEach(v => { %>
+      <tr>
+        <td>
+          <% const [a, m, d] = v.fecha.split("-"); %>
+          <%= `${d}/${m}/${a}` %>
+        </td>
+        <td><%= v.monto.toFixed(2) %></td>
+        <td><%= v.descripcion %></td>
+        <td><%= v.pagado_deuna ? "Sí" : "No" %></td>
+      </tr>
+    <% }) %>
+  </table>
+
+  <p><a href="/">← Volver</a></p>
+</body>
+</html>
