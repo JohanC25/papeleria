@@ -1,14 +1,30 @@
-const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('./database/ventas.db');
+require('dotenv').config();
+const mysql = require('mysql2');
 
-db.serialize(() => {
-  db.run(`CREATE TABLE IF NOT EXISTS ventas (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    fecha TEXT,
-    monto REAL,
-    descripcion TEXT,
-    pagado_deuna INTEGER
-  )`);
+const connection = mysql.createConnection({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  port: process.env.DB_PORT
 });
 
-module.exports = db;
+connection.connect(err => {
+  if (err) throw err;
+  console.log('Conectado a MySQL');
+
+  const sql = `CREATE TABLE IF NOT EXISTS ventas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    fecha DATE,
+    monto DECIMAL(10,2),
+    descripcion TEXT,
+    pagado_deuna BOOLEAN
+  )`;
+
+  connection.query(sql, (err) => {
+    if (err) throw err;
+    console.log('Tabla "ventas" lista');
+  });
+});
+
+module.exports = connection;

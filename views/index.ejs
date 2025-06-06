@@ -79,13 +79,10 @@
     </tr>
     <% ventas.forEach(v => { %>
         <tr>
-        <td>
-            <% const [a, m, d] = v.fecha.split("-"); %>
-            <%= `${d}/${m}/${a}` %>
-        </td>
-        <td><%= v.monto.toFixed(2) %></td>
-        <td><%= v.descripcion %></td>
-        <td><%= v.pagado_deuna_str %></td>
+          <td><%= v.fecha_formateada %></td>
+          <td><%= v.monto.toFixed(2) %></td>
+          <td><%= v.descripcion %></td>
+          <td><%= v.pagado_deuna_str %></td>
         </tr>
     <% }) %>
     <tr>

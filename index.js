@@ -8,14 +8,25 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
 
+// Función para formatear fechas como dd/mm/yyyy
+function formatearFecha(fecha) {
+  const fechaObj = new Date(fecha);
+  const d = String(fechaObj.getDate()).padStart(2, '0');
+  const m = String(fechaObj.getMonth() + 1).padStart(2, '0');
+  const a = fechaObj.getFullYear();
+  return `${d}/${m}/${a}`;
+}
+
 app.get('/', (req, res) => {
-  db.all('SELECT * FROM ventas ORDER BY fecha DESC', (err, rows) => {
+  db.query('SELECT * FROM ventas ORDER BY fecha DESC', (err, results) => {
     if (err) throw err;
-    rows = rows.map(row => ({
+    const ventas = results.map(row => ({
       ...row,
-      pagado_deuna_str: row.pagado_deuna ? 'Sí' : 'No'
+      monto: Number(row.monto), // 👈 aseguramos que sea número
+      pagado_deuna_str: row.pagado_deuna ? 'Sí' : 'No',
+      fecha_formateada: formatearFecha(row.fecha)
     }));
-    res.render('index', { ventas: rows });
+    res.render('index', { ventas });
   });
 });
 
@@ -43,22 +54,30 @@ app.get('/reportes', (req, res) => {
 
   query += ' ORDER BY fecha DESC';
 
-  db.all(query, params, (err, rows) => {
+  db.query(query, params, (err, results) => {
     if (err) throw err;
 
     let total = 0, conDeuna = 0, sinDeuna = 0;
 
-    rows.forEach(v => {
-      total += v.monto;
-      if (v.pagado_deuna) conDeuna += v.monto;
-      else sinDeuna += v.monto;
+    const ventas = results.map(row => {
+      const monto = Number(row.monto); // 👈 convertir monto a número
+      total += monto;
+      if (row.pagado_deuna) conDeuna += monto;
+      else sinDeuna += monto;
+
+      return {
+        ...row,
+        monto,
+        fecha_formateada: formatearFecha(row.fecha),
+        pagado_deuna_str: row.pagado_deuna ? 'Sí' : 'No'
+      };
     });
 
     res.render('reportes', {
       total: total.toFixed(2),
       conDeuna: conDeuna.toFixed(2),
       sinDeuna: sinDeuna.toFixed(2),
-      ventas: rows,
+      ventas,
       filtros: { desde, hasta, deuna }
     });
   });
@@ -66,7 +85,7 @@ app.get('/reportes', (req, res) => {
 
 app.post('/registrar', (req, res) => {
   const { fecha, monto, descripcion, pagado } = req.body;
-  db.run(
+  db.query(
     'INSERT INTO ventas (fecha, monto, descripcion, pagado_deuna) VALUES (?, ?, ?, ?)',
     [fecha, monto, descripcion, pagado === 'on' ? 1 : 0],
     err => {
