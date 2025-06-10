@@ -1,7 +1,7 @@
 require('dotenv').config();
-const mysql = require('mysql2');
+const { Client } = require('pg');
 
-const connection = mysql.createConnection({
+const client = new Client({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
@@ -9,22 +9,28 @@ const connection = mysql.createConnection({
   port: process.env.DB_PORT
 });
 
-connection.connect(err => {
-  if (err) throw err;
-  console.log('Conectado a MySQL');
+client.connect(err => {
+  if (err) {
+    console.error('Error al conectar a PostgreSQL', err.stack);
+  } else {
+    console.log('Conectado a PostgreSQL');
 
-  const sql = `CREATE TABLE IF NOT EXISTS ventas (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    fecha DATE,
-    monto DECIMAL(10,2),
-    descripcion TEXT,
-    pagado_deuna BOOLEAN
-  )`;
+    const sql = `CREATE TABLE IF NOT EXISTS ventas (
+      id SERIAL PRIMARY KEY,
+      fecha DATE,
+      monto NUMERIC(10,2),
+      descripcion TEXT,
+      pagado_deuna BOOLEAN
+    )`;
 
-  connection.query(sql, (err) => {
-    if (err) throw err;
-    console.log('Tabla "ventas" lista');
-  });
+    client.query(sql, (err, res) => {
+      if (err) {
+        console.error('Error al crear la tabla', err.stack);
+      } else {
+        console.log('Tabla "ventas" lista');
+      }
+    });
+  }
 });
 
-module.exports = connection;
+module.exports = client;

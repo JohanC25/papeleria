@@ -1,0 +1,17 @@
+<h1>Editar Venta</h1>
+<form method="POST" action="/editar/<%= venta.id %>">
+  <label>Fecha:
+    <input type="date" name="fecha" value="<%= venta.fecha.toISOString().split('T')[0] %>" required>
+  </label><br>
+  <label>Monto:
+    <input type="number" name="monto" step="0.01" value="<%= venta.monto %>" required>
+  </label><br>
+  <label>Descripción:
+    <input type="text" name="descripcion" value="<%= venta.descripcion %>" required>
+  </label><br>
+  <label>
+    <input type="checkbox" name="pagado" <%= venta.pagado_deuna ? 'checked' : '' %>> Pagado con Deuna
+  </label><br>
+  <button type="submit">Actualizar</button>
+</form>
+<a href="/reportes">← Cancelar</a>

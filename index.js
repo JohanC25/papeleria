@@ -18,11 +18,11 @@ function formatearFecha(fecha) {
 }
 
 app.get('/', (req, res) => {
-  db.query('SELECT * FROM ventas ORDER BY fecha DESC', (err, results) => {
+  db.query('SELECT * FROM ventas ORDER BY fecha DESC', (err, result) => {
     if (err) throw err;
-    const ventas = results.map(row => ({
+    const ventas = result.rows.map(row => ({
       ...row,
-      monto: Number(row.monto), // 👈 aseguramos que sea número
+      monto: Number(row.monto),
       pagado_deuna_str: row.pagado_deuna ? 'Sí' : 'No',
       fecha_formateada: formatearFecha(row.fecha)
     }));
@@ -35,32 +35,33 @@ app.get('/reportes', (req, res) => {
 
   let query = 'SELECT * FROM ventas WHERE 1=1';
   let params = [];
+  let paramIndex = 1;
 
   if (desde) {
-    query += ' AND fecha >= ?';
+    query += ` AND fecha >= $${paramIndex++}`;
     params.push(desde);
   }
 
   if (hasta) {
-    query += ' AND fecha <= ?';
+    query += ` AND fecha <= $${paramIndex++}`;
     params.push(hasta);
   }
 
   if (deuna === '1') {
-    query += ' AND pagado_deuna = 1';
+    query += ' AND pagado_deuna = true';
   } else if (deuna === '0') {
-    query += ' AND pagado_deuna = 0';
+    query += ' AND pagado_deuna = false';
   }
 
   query += ' ORDER BY fecha DESC';
 
-  db.query(query, params, (err, results) => {
+  db.query(query, params, (err, result) => {
     if (err) throw err;
 
     let total = 0, conDeuna = 0, sinDeuna = 0;
 
-    const ventas = results.map(row => {
-      const monto = Number(row.monto); // 👈 convertir monto a número
+    const ventas = result.rows.map(row => {
+      const monto = Number(row.monto);
       total += monto;
       if (row.pagado_deuna) conDeuna += monto;
       else sinDeuna += monto;
@@ -83,11 +84,55 @@ app.get('/reportes', (req, res) => {
   });
 });
 
+app.get('/ver/:id', (req, res) => {
+  const id = req.params.id;
+  db.query('SELECT * FROM ventas WHERE id = $1', [id], (err, result) => {
+    if (err) throw err;
+    if (result.rows.length === 0) return res.send('Venta no encontrada');
+    const venta = result.rows[0];
+    venta.monto = Number(venta.monto);
+    venta.fecha_formateada = formatearFecha(venta.fecha);
+    venta.pagado_deuna_str = venta.pagado_deuna ? 'Sí' : 'No';
+    res.render('ver', { venta });
+  });
+});
+
+app.get('/editar/:id', (req, res) => {
+  const id = req.params.id;
+  db.query('SELECT * FROM ventas WHERE id = $1', [id], (err, result) => {
+    if (err) throw err;
+    if (result.rows.length === 0) return res.send('Venta no encontrada');
+    const venta = result.rows[0];
+    res.render('editar', { venta });
+  });
+});
+
+app.post('/editar/:id', (req, res) => {
+  const id = req.params.id;
+  const { fecha, monto, descripcion, pagado } = req.body;
+  db.query(
+    'UPDATE ventas SET fecha = $1, monto = $2, descripcion = $3, pagado_deuna = $4 WHERE id = $5',
+    [fecha, monto, descripcion, pagado === 'on', id],
+    err => {
+      if (err) throw err;
+      res.redirect('/reportes');
+    }
+  );
+});
+
+app.post('/eliminar/:id', (req, res) => {
+  const id = req.params.id;
+  db.query('DELETE FROM ventas WHERE id = $1', [id], err => {
+    if (err) throw err;
+    res.redirect('/reportes');
+  });
+});
+
 app.post('/registrar', (req, res) => {
   const { fecha, monto, descripcion, pagado } = req.body;
   db.query(
-    'INSERT INTO ventas (fecha, monto, descripcion, pagado_deuna) VALUES (?, ?, ?, ?)',
-    [fecha, monto, descripcion, pagado === 'on' ? 1 : 0],
+    'INSERT INTO ventas (fecha, monto, descripcion, pagado_deuna) VALUES ($1, $2, $3, $4)',
+    [fecha, monto, descripcion, pagado === 'on'],
     err => {
       if (err) throw err;
       res.redirect('/');

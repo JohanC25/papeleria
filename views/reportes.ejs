@@ -30,18 +30,37 @@
       margin: 5px;
       padding: 5px;
     }
+    .acciones a, .acciones form {
+      display: inline-block;
+      margin-right: 5px;
+    }
+    .acciones form {
+      margin: 0;
+    }
+    .acciones button {
+      background: none;
+      border: none;
+      color: red;
+      cursor: pointer;
+      padding: 0;
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
   <h1>Reporte de Ventas</h1>
 
   <form method="GET" action="/reportes">
-    <label>Desde: <input type="date" name="desde" value="<%= filtros.desde || '' %>"></label>
-    <label>Hasta: <input type="date" name="hasta" value="<%= filtros.hasta || '' %>"></label>
+    <label>Desde:
+      <input type="date" name="desde" value="<%= filtros.desde || '' %>">
+    </label>
+    <label>Hasta:
+      <input type="date" name="hasta" value="<%= filtros.hasta || '' %>">
+    </label>
     <label>
       ¿Pagado con Deuna?
       <select name="deuna">
-        <option value="" <%= filtros.deuna === undefined ? 'selected' : '' %>>Todos</option>
+        <option value="" <%= (typeof filtros.deuna === 'undefined' || filtros.deuna === '') ? 'selected' : '' %>>Todos</option>
         <option value="1" <%= filtros.deuna === '1' ? 'selected' : '' %>>Sí</option>
         <option value="0" <%= filtros.deuna === '0' ? 'selected' : '' %>>No</option>
       </select>
@@ -54,22 +73,34 @@
   <p><strong>Total pagado sin Deuna:</strong> $<%= sinDeuna %></p>
 
   <table>
-    <tr>
-      <th>Fecha</th>
-      <th>Monto</th>
-      <th>Descripción</th>
-      <th>Pagado Deuna</th>
-    </tr>
-    <% ventas.forEach(v => { %>
+    <thead>
       <tr>
-        <td><%= v.fecha_formateada %></td>
-        <td><%= v.monto.toFixed(2) %></td>
-        <td><%= v.descripcion %></td>
-        <td><%= v.pagado_deuna_str %></td>
+        <th>Fecha</th>
+        <th>Monto</th>
+        <th>Descripción</th>
+        <th>Pagado Deuna</th>
+        <th>Acciones</th>
       </tr>
-    <% }) %>
+    </thead>
+    <tbody>
+      <% ventas.forEach(v => { %>
+        <tr>
+          <td><%= v.fecha_formateada %></td>
+          <td><%= v.monto.toFixed(2) %></td>
+          <td><%= v.descripcion %></td>
+          <td><%= v.pagado_deuna_str %></td>
+          <td class="acciones">
+            <a href="/ver/<%= v.id %>">Ver</a>
+            <a href="/editar/<%= v.id %>">Editar</a>
+            <form method="POST" action="/eliminar/<%= v.id %>" onsubmit="return confirm('¿Estás seguro de que deseas eliminar esta venta?');">
+              <button type="submit">Borrar</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
   </table>
 
-  <p><a href="/">← Volver</a></p>
+  <p><a href="/">&larr; Volver</a></p>
 </body>
 </html>
